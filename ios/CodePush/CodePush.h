@@ -103,9 +103,19 @@
 @property (copy) NSString *deploymentKey;
 @property (copy) NSString *serverURL;
 @property (copy) NSString *publicKey;
+// 新增 props
+@property (copy) NSString *multiBundlesHead;
+@property (readonly) NSArray<NSDictionary<NSString *, NSString *> *> *multiBundles;
 
 + (instancetype)current;
-
+// 新增 methods
+- (BOOL) isMultiBundleMode;
+- (NSString *) bundleResourceSubdirectory:(NSString *)subdirectory;
+- (NSString *) getCodePushPath:(NSString *)codePushPath;
+- (nullable id) preferenceObjectForKey:(nonnull NSString *)key;
+- (void) preferenceSetObject:(nullable id)obj forKey:(nonnull NSString *)key;
+- (void) preferenceRemoveObjectForKey:(nonnull NSString *)key;
+- (BOOL) switchBundle:(NSString *)head;
 @end
 
 @interface CodePushDownloadHandler : NSObject <NSURLConnectionDelegate>

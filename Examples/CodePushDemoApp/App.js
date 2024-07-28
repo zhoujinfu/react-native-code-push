@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 
 import CodePush from "react-native-code-push";
+const NativeCodePush = require("react-native").NativeModules.CodePush;
 
+console.log('7');
 class App extends Component<{}> {
   constructor() {
     super();
@@ -85,6 +87,18 @@ class App extends Component<{}> {
     );
   }
 
+  async switchBundle() {
+    const current = await NativeCodePush.currentBundle();
+    console.log(current);
+    if (current === 'v1') {
+      await NativeCodePush.switchBundle('v2-cn');
+    } else if (current === 'v2-cn') {
+      await NativeCodePush.switchBundle('v2-global');
+    } else {
+      await NativeCodePush.switchBundle('v1');
+    }
+  }
+
   render() {
     let progressView;
 
@@ -99,6 +113,9 @@ class App extends Component<{}> {
         <Text style={styles.welcome}>
           Welcome to CodePush!
         </Text>
+        <TouchableOpacity onPress={this.switchBundle.bind(this)}>
+          <Text>Switch Bundle</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={this.sync.bind(this)}>
           <Text style={styles.syncButton}>Press for background sync</Text>
         </TouchableOpacity>
@@ -155,7 +172,9 @@ const styles = StyleSheet.create({
  * different check frequency, such as ON_APP_START, for a 'hands-off' approach where CodePush.sync() does not
  * need to be explicitly called. All options of CodePush.sync() are also available in this decorator.
  */
-let codePushOptions = { checkFrequency: CodePush.CheckFrequency.MANUAL };
+let codePushOptions = {
+  checkFrequency: CodePush.CheckFrequency.MANUAL
+};
 
 App = CodePush(codePushOptions)(App);
 

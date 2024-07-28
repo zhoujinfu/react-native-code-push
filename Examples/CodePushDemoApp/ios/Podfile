@@ -3,6 +3,8 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 
 platform :ios, '11.0'
 
+pod 'FLEX', :configurations => ['Debug', 'Release']
+
 target 'CodePushDemoApp' do
   config = use_native_modules!
 
@@ -24,6 +26,20 @@ target 'CodePushDemoApp' do
   use_flipper!()
 
   post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      if target.name == 'Flipper'
+        file_path = 'Pods/Flipper/xplat/Flipper/FlipperTransportTypes.h'
+        contents = File.read(file_path)
+        system("chmod +w " + file_path)
+        unless contents.include?('#include <functional>')
+          File.open(file_path, 'w') do |file|
+            file.puts('#include <functional>')
+            file.puts(contents)
+          end
+        end
+      end
+    end
+
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end

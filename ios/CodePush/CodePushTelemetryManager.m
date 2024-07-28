@@ -45,8 +45,7 @@ static NSString *const StatusKey = @"status";
 
 + (NSDictionary *)getRetryStatusReport
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSDictionary *retryStatusReport = [preferences objectForKey:RetryDeploymentReportKey];
+    NSDictionary *retryStatusReport = [[CodePushConfig current] preferenceObjectForKey:RetryDeploymentReportKey];
     if (retryStatusReport) {
         [self clearRetryStatusReport];
         return retryStatusReport;
@@ -116,18 +115,14 @@ static NSString *const StatusKey = @"status";
 
 + (void)saveStatusReportForRetry:(NSDictionary *)statusReport
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences setValue:statusReport forKey:RetryDeploymentReportKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:statusReport forKey:RetryDeploymentReportKey];
 }
 
 #pragma mark - private methods
 
 + (void)clearRetryStatusReport
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences setValue:nil forKey:RetryDeploymentReportKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:nil forKey:RetryDeploymentReportKey];
 }
 
 + (NSString *)getDeploymentKeyFromStatusReportIdentifier:(NSString *)statusReportIdentifier
@@ -150,8 +145,7 @@ static NSString *const StatusKey = @"status";
 
 + (NSString *)getPreviousStatusReportIdentifier
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSString *sentStatusReportIdentifier = [preferences objectForKey:LastDeploymentReportKey];
+    NSString *sentStatusReportIdentifier = [[CodePushConfig current] preferenceObjectForKey:LastDeploymentReportKey];
     return sentStatusReportIdentifier;
 }
 
@@ -167,9 +161,7 @@ static NSString *const StatusKey = @"status";
 
 + (void)saveStatusReportedForIdentifier:(NSString *)appVersionOrPackageIdentifier
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences setValue:appVersionOrPackageIdentifier forKey:LastDeploymentReportKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:appVersionOrPackageIdentifier forKey:LastDeploymentReportKey];
 }
 
 @end

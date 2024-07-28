@@ -15,6 +15,7 @@
 #endif
 
 #import "CodePush.h"
+#import <React/RCTReloadCommand.h>
 
 @interface CodePush () <RCTBridgeModule, RCTFrameUpdateObserver>
 @end
@@ -153,8 +154,9 @@ static NSString *const LatestRollbackCountKey = @"count";
 {
     bundleResourceName = resourceName;
     bundleResourceExtension = resourceExtension;
-    bundleResourceSubdirectory = resourceSubdirectory;
+    bundleResourceSubdirectory = [[CodePushConfig current] bundleResourceSubdirectory:resourceSubdirectory];
     bundleResourceBundle = resourceBundle;
+    CPLog(@"bundleResourceSubdirectory = %@", bundleResourceSubdirectory);
 
     [self ensureBinaryBundleExists];
 
@@ -396,8 +398,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     [self clearDebugUpdates];
 #endif
     self.paused = YES;
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSDictionary *pendingUpdate = [preferences objectForKey:PendingUpdateKey];
+    NSDictionary *pendingUpdate = [[CodePushConfig current] preferenceObjectForKey:PendingUpdateKey];
     if (pendingUpdate) {
         _isFirstRunAfterUpdate = YES;
         BOOL updateIsLoading = [pendingUpdate[PendingUpdateIsLoadingKey] boolValue];
@@ -423,8 +424,7 @@ static NSString *const LatestRollbackCountKey = @"count";
  */
 + (NSDictionary *)getLatestRollbackInfo
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSDictionary *latestRollbackInfo = [preferences objectForKey:LatestRollbackInfoKey];
+    NSDictionary *latestRollbackInfo = [[CodePushConfig current] preferenceObjectForKey:LatestRollbackInfoKey];
     return latestRollbackInfo;
 }
 
@@ -439,8 +439,7 @@ static NSString *const LatestRollbackCountKey = @"count";
         return;
     }
 
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableDictionary *latestRollbackInfo = [preferences objectForKey:LatestRollbackInfoKey];
+    NSMutableDictionary *latestRollbackInfo = [[CodePushConfig current] preferenceObjectForKey:LatestRollbackInfoKey];
     if (latestRollbackInfo == nil) {
         latestRollbackInfo = [[NSMutableDictionary alloc] init];
     } else {
@@ -455,8 +454,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     [latestRollbackInfo setValue:currentTimeMillis forKey:LatestRollbackTimeKey];
     [latestRollbackInfo setValue:packageHash forKey:LatestRollbackPackageHashKey];
 
-    [preferences setObject:latestRollbackInfo forKey:LatestRollbackInfoKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:latestRollbackInfo forKey:LatestRollbackInfoKey];
 }
 
 /*
@@ -480,8 +478,7 @@ static NSString *const LatestRollbackCountKey = @"count";
  */
 + (BOOL)isFailedHash:(NSString*)packageHash
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableArray *failedUpdates = [preferences objectForKey:FailedUpdatesKey];
+    NSMutableArray *failedUpdates = [[CodePushConfig current] preferenceObjectForKey:FailedUpdatesKey];
     if (failedUpdates == nil || packageHash == nil) {
         return NO;
     } else {
@@ -510,8 +507,7 @@ static NSString *const LatestRollbackCountKey = @"count";
  */
 + (BOOL)isPendingUpdate:(NSString*)packageHash
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSDictionary *pendingUpdate = [preferences objectForKey:PendingUpdateKey];
+    NSDictionary *pendingUpdate = [[CodePushConfig current] preferenceObjectForKey:PendingUpdateKey];
 
     // If there is a pending update whose "state" isn't loading, then we consider it "pending".
     // Additionally, if a specific hash was provided, we ensure it matches that of the pending update.
@@ -583,8 +579,7 @@ static NSString *const LatestRollbackCountKey = @"count";
         return;
     }
     
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSMutableArray *failedUpdates = [preferences objectForKey:FailedUpdatesKey];
+    NSMutableArray *failedUpdates = [[CodePushConfig current] preferenceObjectForKey:FailedUpdatesKey];
     if (failedUpdates == nil) {
         failedUpdates = [[NSMutableArray alloc] init];
     } else {
@@ -594,8 +589,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     }
 
     [failedUpdates addObject:failedPackage];
-    [preferences setObject:failedUpdates forKey:FailedUpdatesKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:failedUpdates forKey:FailedUpdatesKey];
 }
 
 /*
@@ -604,9 +598,7 @@ static NSString *const LatestRollbackCountKey = @"count";
  */
 + (void)removeFailedUpdates
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences removeObjectForKey:FailedUpdatesKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceRemoveObjectForKey:FailedUpdatesKey];
 }
 
 /*
@@ -615,9 +607,7 @@ static NSString *const LatestRollbackCountKey = @"count";
  */
 + (void)removePendingUpdate
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences removeObjectForKey:PendingUpdateKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceRemoveObjectForKey:PendingUpdateKey];
 }
 
 /*
@@ -630,13 +620,11 @@ static NSString *const LatestRollbackCountKey = @"count";
 {
     // Since we're not restarting, we need to store the fact that the update
     // was installed, but hasn't yet become "active".
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
     NSDictionary *pendingUpdate = [[NSDictionary alloc] initWithObjectsAndKeys:
                                    packageHash,PendingUpdateHashKey,
                                    [NSNumber numberWithBool:isLoading],PendingUpdateIsLoadingKey, nil];
 
-    [preferences setObject:pendingUpdate forKey:PendingUpdateKey];
-    [preferences synchronize];
+    [[CodePushConfig current] preferenceSetObject:pendingUpdate forKey:PendingUpdateKey];
 }
 
 - (NSArray<NSString *> *)supportedEvents {
@@ -1043,6 +1031,31 @@ RCT_EXPORT_METHOD(clearUpdates) {
 
 #pragma mark - JavaScript-exported module methods (Private)
 
+RCT_EXPORT_METHOD(currentBundle: (RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject){
+    resolve([[CodePushConfig current] multiBundlesHead]);
+}
+
+RCT_EXPORT_METHOD(switchBundle:(NSString *) head
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+    BOOL ok = [[CodePushConfig current] switchBundle:head];
+    
+    if (!ok) {
+        CPLog(@"No need to reload bundle!");
+        reject(@"-1", @"No need to switch bundle", nil);
+        return;
+    }
+    if ([NSThread isMainThread]) {
+        RCTTriggerReloadCommandListeners(@"reload bundle");
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            RCTTriggerReloadCommandListeners(@"reload bundle");
+        });
+    }
+    resolve(nil);
+}
 /*
  * This method is the native side of the CodePush.downloadAndReplaceCurrentBundle()
  * method, which replaces the current bundle with the one downloaded from
@@ -1065,8 +1078,7 @@ RCT_EXPORT_METHOD(getNewStatusReport:(RCTPromiseResolveBlock)resolve
 {
     if (needToReportRollback) {
         needToReportRollback = NO;
-        NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-        NSMutableArray *failedUpdates = [preferences objectForKey:FailedUpdatesKey];
+        NSMutableArray *failedUpdates = [[CodePushConfig current] preferenceObjectForKey:FailedUpdatesKey];
         if (failedUpdates) {
             NSDictionary *lastFailedPackage = [failedUpdates lastObject];
             if (lastFailedPackage) {

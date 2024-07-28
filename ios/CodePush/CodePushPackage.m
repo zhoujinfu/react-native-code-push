@@ -345,6 +345,8 @@ static NSString *const UnzippedFolderName = @"unzipped";
     NSString* codePushPath = [[CodePush getApplicationSupportDirectory] stringByAppendingPathComponent:@"CodePush"];
     if ([CodePush isUsingTestConfiguration]) {
         codePushPath = [codePushPath stringByAppendingPathComponent:@"TestPackages"];
+    } else {
+        codePushPath = [[CodePushConfig current] getCodePushPath:codePushPath];
     }
     
     return codePushPath;

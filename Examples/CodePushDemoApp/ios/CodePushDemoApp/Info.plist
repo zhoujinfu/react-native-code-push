@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
@@ -28,6 +28,11 @@
 	<dict>
 		<key>NSExceptionDomains</key>
 		<dict>
+			<key>47.113.59.236</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
@@ -52,6 +57,17 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>CodePushDeploymentKey</key>
-	<string>deployment-key-here</string>
+	<string>2a43fslbJP7TXe95z5vlIfUHGfuS4ksvOXqog</string>
+	<key>CodePushServerURL</key>
+	<string>http://localhost:3000</string>
+	<key>CodePushMultiBundles</key>
+	<array>
+		<dict>
+			<key>bundle</key>
+			<string>v1</string>
+			<key>deploymentKey</key>
+			<string>2a43fslbJP7TXe95z5vlIfUHGfuS4ksvOXqog</string>
+		</dict>
+	</array>
 </dict>
 </plist>
