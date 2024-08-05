@@ -116,6 +116,7 @@
 - (void) preferenceSetObject:(nullable id)obj forKey:(nonnull NSString *)key;
 - (void) preferenceRemoveObjectForKey:(nonnull NSString *)key;
 - (BOOL) switchBundle:(NSString *)head;
+- (BOOL) switchBundleWithDeploymentKey:(NSString *)key;
 @end
 
 @interface CodePushDownloadHandler : NSObject <NSURLConnectionDelegate>

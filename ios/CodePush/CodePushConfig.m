@@ -53,9 +53,25 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
     }
     // 如果配置了多 bundle，但当前preferences内无 head，将 head 默认指向第一个内置 bundle
     if (multiBundlesHead == nil && multiBundles != nil && multiBundles.count > 0) {
-        multiBundlesHead = multiBundles[0][@"bundle"];
-        [userDefaults setObject:multiBundlesHead forKey:MultiBundlesHeadKey];
-        [userDefaults synchronize];
+        // 如果配置了多 bundle，但当前preferences内无 head，将 head 默认指向第一个内置 bundle
+        if (multiBundlesHead == nil) {
+            multiBundlesHead = multiBundles[0][@"deploymentName"];
+            deploymentKey = multiBundles[0][@"deploymentKey"];
+            [userDefaults setObject:multiBundlesHead forKey:MultiBundlesHeadKey];
+            [userDefaults synchronize];
+        }
+        // 如果配置了多 bundle，但当前 head 指向的 bundle 不在了
+        // 一般发生在，前一次构建有 bundle a，head 指向了 a，但后一次构建时把 a 删除
+        else {
+            if ([self _findBundleIndexByName:multiBundlesHead] == -1) {
+                multiBundlesHead = multiBundles[0][@"deploymentName"];
+                deploymentKey = multiBundles[0][@"deploymentKey"];
+                [userDefaults setObject:multiBundlesHead forKey:MultiBundlesHeadKey];
+                [userDefaults synchronize];
+            }
+        }
+    } else if (!multiBundles || multiBundles.count == 0) {
+        multiBundlesHead = nil;
     }
 
     if (!serverURL) {
@@ -95,14 +111,7 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
 - (NSString *)deploymentKey
 {
     if (self.isMultiBundleMode) {
-        int found = -1;
-        for (int i = 0; i < [self.multiBundles count]; i++) {
-            NSString *bundle = self.multiBundles[i][@"bundle"];
-            if ([bundle isEqualToString:self.multiBundlesHead]) {
-                found = i;
-                break;
-            }
-        }
+        int found = [self _findBundleIndexByName:self.multiBundlesHead];
         if (found == -1) return [_configDictionary objectForKey:DeploymentKeyConfigKey];
         return self.multiBundles[found][@"deploymentKey"];
     }
@@ -147,7 +156,6 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
 {
     // 非多bundle模式下，quick returns
     if (!self.isMultiBundleMode) {
-        CPLog(@"非多 bundle 模式下，CodePushConfig.setMultiBundlesHead 失效!");
         return;
     }
     
@@ -164,7 +172,7 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
 {
     if (!self.isMultiBundleMode) return subdirectory;
     
-    return [@"" stringByAppendingFormat:@"/%@/%@", @"bundles", self.multiBundlesHead];
+    return [@"" stringByAppendingFormat:@"/%@/%@", @"deployments", self.multiBundlesHead];
 }
 
 // 读取 CodePush path 时，根据多 bundle 模式，拼接各 bundle 的目录
@@ -197,25 +205,48 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
     [preferences removeObjectForKey:key];
     [preferences synchronize];
 }
+- (int) _findBundleIndexByFieldName:(NSString *)fieldName with:(NSString *)val
+{
+    int found = -1;
+    for (int i = 0; i < [self.multiBundles count]; i++) {
+        NSString *value = self.multiBundles[i][fieldName];
+        if ([value isEqualToString:val]) {
+            found = i;
+            break;
+        }
+    }
+    return found;
+}
+
+- (int) _findBundleIndexByName:(NSString *)name
+{
+    return [self _findBundleIndexByFieldName:@"deploymentName" with:name];
+}
+
+- (int) _findBundleIndexByKey:(NSString *)key
+{
+    return [self _findBundleIndexByFieldName:@"deploymentKey" with:key];
+}
+
 // 切换内置 bundle
 - (BOOL)switchBundle:(NSString *)head
 {
     if (head == nil) return NO;
     if (!self.isMultiBundleMode) return NO;
     
-    int found = -1;
-    for (int i = 0; i < [self.multiBundles count]; i++) {
-        NSString *bundle = self.multiBundles[i][@"bundle"];
-        if ([bundle isEqualToString:self.multiBundlesHead]) {
-            found = i;
-            break;
-        }
-    }
-    if (found == -1) return NO;
+    if ([self _findBundleIndexByName:self.multiBundlesHead] == -1) return NO;
     if ([self.multiBundlesHead isEqualToString:head]) return NO;
 
     [self setMultiBundlesHead:head];
     return YES;
+}
+// 使用 deploymentKey 切换 bundle
+-(BOOL)switchBundleWithDeploymentKey:(NSString *)key
+{
+    int found = [self _findBundleIndexByKey:key];
+    if (found == -1) return NO;
+    NSString *head = self.multiBundles[found][@"deploymentName"];
+    return [self switchBundle:head];
 }
 
 - (void)setAppVersion:(NSString *)appVersion

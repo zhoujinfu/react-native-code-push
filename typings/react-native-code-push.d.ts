@@ -309,6 +309,10 @@ declare namespace CodePush {
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
 
+    /** 多 bundle 模式下，获取当前 bundle 的 deploymentName */
+    function currentBundle(): Promise<string>;
+    /** 多 bundle 模式下，切换 bundle */
+    function switchBundle(head: string): Promise<any>;
     /**
      * Indicates when you would like an installed update to actually be applied.
      */

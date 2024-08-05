@@ -663,7 +663,9 @@ if (NativeCodePush) {
     DEFAULT_ROLLBACK_RETRY_OPTIONS: {
       delayInHours: 24,
       maxRetryAttempts: 1
-    }
+    },
+    currentBundle: NativeCodePush.currentBundle,
+    switchBundle: NativeCodePush.switchBundle,
   });
 } else {
   log("The CodePush module doesn't appear to be properly installed. Please double-check that everything is setup correctly.");
