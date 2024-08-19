@@ -31,4 +31,6 @@ public class CodePushConstants {
     public static final String LATEST_ROLLBACK_PACKAGE_HASH_KEY = "packageHash";
     public static final String LATEST_ROLLBACK_TIME_KEY = "time";
     public static final String LATEST_ROLLBACK_COUNT_KEY = "count";
+
+    public static final String MULTI_BUNDLES_HEAD = "MULTI_BUNDLES_HEAD";
 }

@@ -37,10 +37,12 @@ public class CodePush implements ReactPackage {
     private CodePushUpdateManager mUpdateManager;
     private CodePushTelemetryManager mTelemetryManager;
     private SettingsManager mSettingsManager;
+    private MultiBundleInterface mMultiBundleInterface;
 
     // Config properties.
     private String mDeploymentKey;
-    private static String mServerUrl = "https://codepush.appcenter.ms/";
+//    private static String mServerUrl = "https://codepush.appcenter.ms/";
+    private static String mServerUrl = "http://10.0.2.2:3000/";
 
     private Context mContext;
     private final boolean mIsDebugMode;
@@ -61,11 +63,12 @@ public class CodePush implements ReactPackage {
     public CodePush(String deploymentKey, Context context, boolean isDebugMode) {
         mContext = context.getApplicationContext();
 
-        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath());
+        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath(), context);
         mTelemetryManager = new CodePushTelemetryManager(mContext);
         mDeploymentKey = deploymentKey;
         mIsDebugMode = isDebugMode;
         mSettingsManager = new SettingsManager(mContext);
+        mMultiBundleInterface = CodePushConfig.current(mContext);
 
         if (sAppVersion == null) {
             try {
@@ -231,7 +234,7 @@ public class CodePush implements ReactPackage {
     }
 
     public String getDeploymentKey() {
-        return mDeploymentKey;
+        return mMultiBundleInterface.getDeploymentKey(mDeploymentKey);
     }
 
     public static String getJSBundleFile() {
@@ -248,11 +251,12 @@ public class CodePush implements ReactPackage {
 
     public String getJSBundleFileInternal(String assetsBundleFileName) {
         this.mAssetsBundleFileName = assetsBundleFileName;
-        String binaryJsBundleUrl = CodePushConstants.ASSETS_BUNDLE_PREFIX + assetsBundleFileName;
+        String binaryJsBundleUrl = CodePushConstants.ASSETS_BUNDLE_PREFIX + this.mMultiBundleInterface.bundleResourceSubdirectory(assetsBundleFileName);
 
         String packageFilePath = null;
         try {
             packageFilePath = mUpdateManager.getCurrentPackageBundlePath(this.mAssetsBundleFileName);
+            System.out.println("packageFilePath = " + packageFilePath);
         } catch (CodePushMalformedDataException e) {
             // We need to recover the app in case 'codepush.json' is corrupted
             CodePushUtils.log(e.getMessage());

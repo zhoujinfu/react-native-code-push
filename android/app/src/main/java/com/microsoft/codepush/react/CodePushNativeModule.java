@@ -45,6 +45,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     private SettingsManager mSettingsManager;
     private CodePushTelemetryManager mTelemetryManager;
     private CodePushUpdateManager mUpdateManager;
+    private MultiBundleInterface mConfig;
 
     private  boolean _allowed = true;
     private  boolean _restartInProgress = false;
@@ -57,6 +58,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         mSettingsManager = settingsManager;
         mTelemetryManager = codePushTelemetryManager;
         mUpdateManager = codePushUpdateManager;
+        mConfig = CodePushConfig.current(reactContext);
 
         // Initialize module state while we have a reference to the current context.
         mBinaryContentsHash = CodePushUpdateUtils.getHashForBinaryContents(reactContext, mCodePush.isDebugMode());
@@ -235,6 +237,18 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             this._restartQueue.remove(0);
             this.restartAppInternal(buf);
         }
+    }
+
+    @ReactMethod
+    public void currentBundle(Promise promise) {
+        promise.resolve(mConfig.getMultiBundleHead());
+    }
+
+    @ReactMethod
+    public void switchBundle(String head, Promise promise) {
+        boolean ok = mConfig.switchBundle(head);
+        if (ok) loadBundle();
+        promise.resolve(null);
     }
 
     @ReactMethod

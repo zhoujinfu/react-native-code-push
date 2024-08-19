@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 public class CodePushTelemetryManager {
     private SharedPreferences mSettings;
+    private MultiBundleInterface mConfig;
     private final String APP_VERSION_KEY = "appVersion";
     private final String DEPLOYMENT_FAILED_STATUS = "DeploymentFailed";
     private final String DEPLOYMENT_KEY_KEY = "deploymentKey";
@@ -26,6 +27,7 @@ public class CodePushTelemetryManager {
 
     public CodePushTelemetryManager(Context applicationContext) {
         mSettings = applicationContext.getSharedPreferences(CodePushConstants.CODE_PUSH_PREFERENCES, 0);
+        mConfig = CodePushConfig.current(applicationContext);
     }
 
     public WritableMap getBinaryUpdateReport(String appVersion) {
@@ -55,7 +57,7 @@ public class CodePushTelemetryManager {
     }
 
     public WritableMap getRetryStatusReport() {
-        String retryStatusReportString = mSettings.getString(RETRY_DEPLOYMENT_REPORT_KEY, null);
+        String retryStatusReportString = mSettings.getString(mConfig.preferenceKeyWrap(RETRY_DEPLOYMENT_REPORT_KEY), null);
         if (retryStatusReportString != null) {
             clearRetryStatusReport();
             try {
@@ -124,11 +126,11 @@ public class CodePushTelemetryManager {
 
     public void saveStatusReportForRetry(ReadableMap statusReport) {
         JSONObject statusReportJSON = CodePushUtils.convertReadableToJsonObject(statusReport);
-        mSettings.edit().putString(RETRY_DEPLOYMENT_REPORT_KEY, statusReportJSON.toString()).commit();
+        mSettings.edit().putString(mConfig.preferenceKeyWrap(RETRY_DEPLOYMENT_REPORT_KEY), statusReportJSON.toString()).commit();
     }
 
     private void clearRetryStatusReport() {
-        mSettings.edit().remove(RETRY_DEPLOYMENT_REPORT_KEY).commit();
+        mSettings.edit().remove(mConfig.preferenceKeyWrap(RETRY_DEPLOYMENT_REPORT_KEY)).commit();
     }
 
     private String getDeploymentKeyFromStatusReportIdentifier(String statusReportIdentifier) {
@@ -153,7 +155,7 @@ public class CodePushTelemetryManager {
     }
 
     private String getPreviousStatusReportIdentifier() {
-        return mSettings.getString(LAST_DEPLOYMENT_REPORT_KEY, null);
+        return mSettings.getString(mConfig.preferenceKeyWrap(LAST_DEPLOYMENT_REPORT_KEY), null);
     }
 
     private String getVersionLabelFromStatusReportIdentifier(String statusReportIdentifier) {
@@ -170,6 +172,6 @@ public class CodePushTelemetryManager {
     }
 
     private void saveStatusReportedForIdentifier(String appVersionOrPackageIdentifier) {
-        mSettings.edit().putString(LAST_DEPLOYMENT_REPORT_KEY, appVersionOrPackageIdentifier).commit();
+        mSettings.edit().putString(mConfig.preferenceKeyWrap(LAST_DEPLOYMENT_REPORT_KEY), appVersionOrPackageIdentifier).commit();
     }
 }

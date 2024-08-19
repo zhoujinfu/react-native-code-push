@@ -1,5 +1,6 @@
 package com.microsoft.codepush.react;
 
+import android.content.Context;
 import android.os.Build;
 
 import org.json.JSONObject;
@@ -19,9 +20,11 @@ import javax.net.ssl.HttpsURLConnection;
 public class CodePushUpdateManager {
 
     private String mDocumentsDirectory;
+    private MultiBundleInterface mConfig;
 
-    public CodePushUpdateManager(String documentsDirectory) {
+    public CodePushUpdateManager(String documentsDirectory, Context context) {
         mDocumentsDirectory = documentsDirectory;
+        mConfig = CodePushConfig.current(context);
     }
 
     private String getDownloadFilePath() {
@@ -37,7 +40,7 @@ public class CodePushUpdateManager {
     }
 
     private String getCodePushPath() {
-        String codePushPath = CodePushUtils.appendPathComponent(getDocumentsDirectory(), CodePushConstants.CODE_PUSH_FOLDER_PREFIX);
+        String codePushPath = CodePushUtils.appendPathComponent(getDocumentsDirectory(), mConfig.getCodePushPath());
         if (CodePush.isUsingTestConfiguration()) {
             codePushPath = CodePushUtils.appendPathComponent(codePushPath, "TestPackages");
         }

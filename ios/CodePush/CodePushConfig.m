@@ -60,16 +60,6 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
             [userDefaults setObject:multiBundlesHead forKey:MultiBundlesHeadKey];
             [userDefaults synchronize];
         }
-        // 如果配置了多 bundle，但当前 head 指向的 bundle 不在了
-        // 一般发生在，前一次构建有 bundle a，head 指向了 a，但后一次构建时把 a 删除
-        else {
-            if ([self _findBundleIndexByName:multiBundlesHead] == -1) {
-                multiBundlesHead = multiBundles[0][@"deploymentName"];
-                deploymentKey = multiBundles[0][@"deploymentKey"];
-                [userDefaults setObject:multiBundlesHead forKey:MultiBundlesHeadKey];
-                [userDefaults synchronize];
-            }
-        }
     } else if (!multiBundles || multiBundles.count == 0) {
         multiBundlesHead = nil;
     }
@@ -202,7 +192,8 @@ static NSString * const MultiBundlesHeadKey = @"CODE_PUSH_MULTI_BUNDLES_HEAD";
 - (void) preferenceRemoveObjectForKey:(NSString *)key
 {
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    [preferences removeObjectForKey:key];
+    NSString* normalizedKey = self.isMultiBundleMode ? [key stringByAppendingString:self.multiBundlesHead] : key;
+    [preferences removeObjectForKey:normalizedKey];
     [preferences synchronize];
 }
 - (int) _findBundleIndexByFieldName:(NSString *)fieldName with:(NSString *)val
